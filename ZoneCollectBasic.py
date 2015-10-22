@@ -181,9 +181,7 @@ def init():
 
 if __name__ == "__main__":
 	init()
-	print "start periodic task!\n"
-	timing_exe(int(period))
-#	proc()	
+	proc()	
 
 
 

@@ -1,4 +1,4 @@
-period			=	7200
+period			=	60
 ZoneDir			=	www.internic.net/domain/root.zone
 SigDir			=	www.internic.net/domain/root.zone.sig
 Prefix			=	/var/ZoneCollect/
