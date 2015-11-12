@@ -1,8 +1,8 @@
 period			=	60
 ZoneDir			=	www.internic.net/domain/root.zone
 SigDir			=	www.internic.net/domain/root.zone.sig
-Prefix			=	/var/ZoneCollect/
-BackupFilePath	=	Data/ZoneGetBak/
-CurFilePath		=	Data/ZoneGet/
-LogPath			=	Log/
-
+Prefix			=	/var/ZoneCollect
+BackupFilePath	=	Data/ZoneGetBak
+CurFilePath		=	Data/ZoneGet
+LogPath			=	Log
+KeyPath 		= 	/usr/local/RootZoneCollector/PGPVarifyPublicKey.pub

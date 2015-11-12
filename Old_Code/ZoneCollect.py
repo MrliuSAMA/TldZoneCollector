@@ -125,7 +125,7 @@ def proc():
 
 
 def perform_command(schedule,delay_s):
-#	schedule.enter(delay_s,0,perform_command,(schedule,delay_s))
+	schedule.enter(delay_s,0,perform_command,(schedule,delay_s))
 	proc()
 
 def timing_exe(delay = 300):
