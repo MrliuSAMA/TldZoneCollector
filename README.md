@@ -15,22 +15,22 @@ This tool used to get root zone information periodically from IANA
 -----
 ### 目录
    
-+ /Old_Code
++ /Old_Code   
 	存储重要的历史版本代码片段
-+ /script
++ /script   
 	与前端网页的交互脚本都在这里
-+ /Test_Code
++ /Test_Code   
 	测试功能使用的用例代码
    
 ### 文件
    
-+ /ZoneCollector.py
++ /ZoneCollector.py   
 	主功能模块，实现了数据下载、数据校验、文件迁移的功能
-+ /Configuration.in
++ /Configuration.in   
 	配置文件，主功能模块启动前需要的参数都在这里了
-+ /PGPVarifyPublicKey.pub
++ /PGPVarifyPublicKey.pub   
 	校验数字签名时使用的公钥文件(文件来源自MIT公钥数据库)
-+ /root.zone/root.zone.sig
++ /root.zone/root.zone.sig   
 	测试数据文件和测试签名文件，正式版本会将上述测试文件一出
    
 ## 使用方法
