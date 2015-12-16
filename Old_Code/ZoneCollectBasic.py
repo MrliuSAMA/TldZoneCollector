@@ -7,8 +7,10 @@ import socket
 import os
 import sched
 import logging
+import pexpect
 
 PREFIX = "/usr/local/RootZoneCollector"
+PRINT = "yes"
 
 server 		= 	"dummy"
 zonedir		=	"dummy"
@@ -17,44 +19,22 @@ storepathB	=	"dummy"
 storepathT	=	"dummy"
 period		=	"dummy"
 Logpath		=	"dummy"
+KeyPath		=	"dummy"
+
 
 def pull():
 	
-#	print period
-#	print server
-#	print zonedir
-#	print sigdir
-#	print storepathB
-#	print storepathT
-#	print Logpath	
-	
-	HttpConn = httplib.HTTPConnection(server,80,timeout=60)
-	HttpConn.request("GET",sigdir)
-	Response = HttpConn.getresponse()
-	RD = Response.read()
-	filesigname = time.strftime("%F-%H:%M-")+sigdir.split('/')[-1]
-	logging.info("fetch %s status:%s,%s"  % (filesigname, Response.status, Response.reason))
-	HttpConn.close()
-	
+	filesigname = time.strftime("%F-%H:%M-")+sigdir.split('/')[-1]	
 	temp = "%s/tempfile/" % PREFIX
-	FP = open(temp+filesigname, "wb")
-	FP.write(RD)
-	FP.close()
+	cmd = "curl %s -o %s --retry-delay 10 --retry 10" % (sigdir,temp+filesigname)
+	sub = subprocess.Popen(cmd, shell=True)
+	sub.wait()
 
-
-	HttpConn = httplib.HTTPConnection(server,80,timeout=60)
-	HttpConn.request("GET",zonedir)
-	Response = HttpConn.getresponse()
-	RD = Response.read()
-	HttpConn.close()
 	filedataname = time.strftime("%F-%H:%M-")+zonedir.split('/')[-1]
-
-	logging.info("fetch %s status:%s,%s" % (filedataname, Response.status, Response.reason))
 	temp = "%s/tempfile/" % PREFIX
-	FP = open(temp+filedataname, "wb")
-	FP.write(RD)
-	FP.close()
-
+	cmd = "curl %s -o %s --retry-delay 10 --retry 10" % (zonedir,temp+filedataname)
+	sub = subprocess.Popen(cmd, shell=True)
+	sub.wait()
 
 
 	return filesigname,filedataname
@@ -62,8 +42,8 @@ def pull():
 
 
 def check_move(signame,dataname):
-	print dataname
-	print signame
+#	print dataname
+#	print signame
 	
 	cmd = "sudo gpg --verify %s/tempfile/%s %s/tempfile/%s" % (PREFIX,signame,PREFIX,dataname)
 	logging.debug(cmd)
@@ -75,22 +55,22 @@ def check_move(signame,dataname):
 	if res1 != None or res2 != None:
 		logging.warning("zone file %s verified" % dataname)
  
-		runcmd1 = "mv %s/tempfile/%s %s%s" % (PREFIX,dataname,storepathB,dataname)
+		runcmd1 = "mv %s/tempfile/%s %s/%s" % (PREFIX,dataname,storepathB,dataname)
 		logging.debug(runcmd1)
 		sub1 = subprocess.Popen(runcmd1,shell=True)
 		sub1.wait()
 
-		runcmd2 = "mv %s/tempfile/%s %s%s" % (PREFIX,signame,storepathB,signame)
+		runcmd2 = "mv %s/tempfile/%s %s/%s" % (PREFIX,signame,storepathB,signame)
 		logging.debug(runcmd2)
 		sub2 = subprocess.Popen(runcmd2,shell=True)
 		sub2.wait()
 	
-		runcmd3 = "rm -f %s*.*" % storepathT
+		runcmd3 = "rm -f %s/*.*" % storepathT
 		logging.debug(runcmd3)
 		sub3 = subprocess.Popen(runcmd3,shell=True)
 		sub3.wait()
 		
-		runcmd4 = "cp %s%s %s%s" % (storepathB,dataname,storepathT,"root.zone.ori")
+		runcmd4 = "cp %s/%s %s/%s" % (storepathB,dataname,storepathT,"root.zone.ori")
 		logging.debug(runcmd4)
 		sub4 = subprocess.Popen(runcmd4,shell=True)
 		sub4.wait()
@@ -125,13 +105,50 @@ def proc():
 
 
 def perform_command(schedule,delay_s):
-#	schedule.enter(delay_s,0,perform_command,(schedule,delay_s))
+	schedule.enter(delay_s,0,perform_command,(schedule,delay_s))
 	proc()
 
 def timing_exe(delay = 300):
 	schedule = sched.scheduler(time.time,time.sleep)
 	schedule.enter(0,0,perform_command,(schedule,delay))
 	schedule.run()
+
+def ImportKey():
+	cmd = "sudo gpg --import %s" % KeyPath
+	sub = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=True)
+	sub.wait()
+	res = sub.stderr.readlines() 
+	if "not changed" in res[0] and PRINT == "yes":
+		print "key already imported!"
+	elif "imported" in res[0] and PRINT == "yes":
+		print "key import successful"
+			
+	match = re.search(r"key\s([0-9A-Z]*)",res[0])
+	if match != None:
+		keyID = match.group(1)
+		if PRINT == "yes":
+			print keyID
+		return keyID
+
+def PromoteTrustkey(keyID):
+	child = pexpect.spawn("sudo gpg --edit-key %s" % keyID)
+	except_list = ["Command> ","Your decision\? ","\(y/N\) "]
+
+	index = child.expect(except_list)
+	if index == 0:
+		child.sendline("trust")	
+	index = child.expect(except_list)
+	if index == 1:
+		child.sendline("5")
+	index = child.expect(except_list)
+	if index == 2:
+		child.sendline("y")
+	index = child.expect(except_list)
+	if index == 0:
+		child.sendline("quit")
+
+
+
 
 
 def init():
@@ -143,22 +160,26 @@ def init():
 	global storepathB
 	global storepathT
 	global Logpath
-	
+	global KeyPath	
+
 	f = open("%s/Configuration.in" % PREFIX,'r')
 	filelines = f.readlines()
 	period = filelines[0].strip().split()[-1]
-	server = filelines[1].strip().split()[-1].split('/')[0]
-	zonedir = filelines[1].strip().split()[-1][len(server):]
-	sigdir = filelines[2].strip().split()[-1][len(server):]
-	storepathB = filelines[3].strip().split()[-1]+filelines[4].strip().split()[-1]
-	storepathT = filelines[3].strip().split()[-1]+filelines[5].strip().split()[-1]
-	Logpath = filelines[3].strip().split()[-1]+filelines[6].strip().split()[-1]
+	zonedir = filelines[1].strip().split()[-1]
+	sigdir = filelines[2].strip().split()[-1]
+	storepathB = "%s/%s" % (filelines[3].strip().split()[-1], filelines[4].strip().split()[-1])
+	storepathT = "%s/%s" % (filelines[3].strip().split()[-1], filelines[5].strip().split()[-1])
+	Logpath = "%s/%s" % (filelines[3].strip().split()[-1], filelines[6].strip().split()[-1])
+	KeyPath = filelines[7].strip().split()[-1]
+
 	f.close()
 	
 	#import pgp publickey to key ring
-	cmd			= "sudo gpg --import PGPVarifyPublicKey"
-	sub			= subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
-	sub.wait()
+#	cmd			= "sudo gpg --import PGPVarifyPublicKey"
+#	sub			= subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
+#	sub.wait()
+	KeyID = ImportKey()
+	PromoteTrustkey(KeyID)
 
 	#init Folder
 	if os.path.exists(storepathB)==False:
@@ -186,9 +207,9 @@ def init():
 
 if __name__ == "__main__":
 	init()
-	print "start periodic task!\n"
-	timing_exe(int(period))
-#	proc()	
-
+#	print "start periodic task!\n"
+#	timing_exe(int(period))
+	proc()	
+#	pull()
 
 

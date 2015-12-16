@@ -6,51 +6,69 @@ import getopt
 import subprocess
 import time
 
-ControlPREFIX = "/usr/local/RootZoneCollector/"
+#ControlPREFIX = "/usr/local/RootZoneCollector/"
 
 def startService(ControlPREFIX):
-	cmd = 'ps -ef | grep "python %sZoneCollect"'%ControlPREFIX
+	#start ZoneCollect.py process
+	cmd = 'ps -ef | grep ZoneCollect.py'
 	sub = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	sub.wait()
 	reslines = sub.stdout.readlines()
+	judge_ifrun = 0
 	for lines in reslines:
-		if lines.split()[2] == '1':
-			print("program already start")
-			return	
+		if lines.split()[7].startswith("grep"):
+			continue
+		if lines.split()[7].startswith("python") or lines.split()[7].startswith("ZoneCollect"):
+			print ("program already start")
+			print ("pid=%s" % lines.split()[1], end="\n")
+			judge_ifrun = 1
+			break
 
-	cmd1 = "python %sZoneCollect.py &" %(ControlPREFIX)
-	sub1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE, shell=True)
-	sub1.wait()
+	#if process not start, then start
+	if judge_ifrun == 1:
+		return None
+	elif judge_ifrun == 0:
+		cmd_run = "python %s/ZoneCollect.py -c /usr/local/RootZoneCollector/Configuration.in &" % ControlPREFIX
+		print (cmd_run)
+		sub_run = subprocess.Popen(cmd_run, shell=True)
+#		time.sleep(2)
 
-	sub2 = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-	reslines = sub2.stdout.readlines()
-	pid = "dummy"
-	for lines in reslines:
-		if lines.split()[2] == '1':
-			pid = lines.split()[1]
-			print (pid)
+		sub_check = subprocess.Popen('ps -ef | grep ZoneCollect.py', stdout=subprocess.PIPE, shell=True)
+		sub_check.wait()
+		reslines = sub_check.stdout.readlines()
+		for lines in reslines:
+			if lines.split()[7].startswith("grep"):
+				continue
+			if lines.split()[7].startswith("python") or lines.split()[7].startswith("ZoneCollect"):
+				print ("pid=%s," % lines.split()[1], end="\n")
+				break
+
+
 		
-	
 def stopService(ControlPREFIX):
-	cmd = 'ps -ef | grep "python %sZoneCollect"'%ControlPREFIX
+	cmd = "ps -ef | grep ZoneCollect.py"
 	sub = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	sub.wait()
 	reslines = sub.stdout.readlines()
 	pid = "dummy"
-	for lines in reslines:
-		if lines.split()[2] == '1':
-			pid = lines.split()[1]
-			print (pid)
- 
-	sub1 = subprocess.Popen("sudo kill -9 %s" % pid, stdout=subprocess.PIPE, shell=True)
-	sub1.wait()
 
+	for lines in reslines:
+		if lines.split()[7].startswith("grep"):
+			continue
+		if lines.split()[7].startswith("python") or lines.split()[7].startswith("ZoneCollect"):
+			pid = lines.split()[1]
+			print ("pid=%s," % lines.split()[1], end="\n")
+
+ 	if pid == "dummy":
+ 		print ("No progress running")
+ 	else:
+		sub = subprocess.Popen("kill -9 %s" % pid, shell=True)
+		sub.wait()
 
 
 
 def updateConfiguration(ControlPREFIX,value):
 	items = value.strip().split(',')
-#	print (items)
 	f = open(ControlPREFIX+"Configuration.in",'r')
 #	print (ControlPREFIX+"Configuration.in")
 	filelines = f.readlines()
@@ -73,19 +91,17 @@ def updateConfiguration(ControlPREFIX,value):
 
 
 
-
 def runServiceOnce(ControlPREFIX):
-	cmd = "python %sZoneCollectBasic.py &" % ControlPREFIX 
-	sub = subprocess.Popen(cmd,stdout = subprocess.PIPE shell=True)
-#	print ("bbb")
-#	print (sub.stdout.read())
-	sub.wait()
-	print ("running...")
-#	time.sleep(20)
-#	print ("aaa")
-#	print (sub.stdout.read())
+
+	cmd_run = "python %s/ZoneCollect.py -b &" % ControlPREFIX
+	sub_run = subprocess.Popen(cmd_run, shell=True)
+
+
 
 def main(argv):
+
+	ProgramPath = "/usr/local/RootZoneCollector"
+
 	try:
 		opts,args = getopt.getopt(argv[1:], "h", ["stop","start","restart","runonce","update="])
 	except getopt.GetoptError,info:
@@ -94,16 +110,16 @@ def main(argv):
 		sys.exit()
 	for option,value in opts:
 		if option in ("--start"):
-			startService(ControlPREFIX)
+			startService(ProgramPath)
 		elif option in ('--stop'):
-			stopService(ControlPREFIX)
+			stopService(ProgramPath)
 		elif option in ('--restart'):
-			stopService(ControlPREFIX)
-			startService(ControlPREFIX)
+			stopService(ProgramPath)
+			startService(ProgramPath)
 		elif option in ('--runonce'):
-			runServiceOnce(ControlPREFIX)
+			runServiceOnce(ProgramPath)
 		elif option in ('--update'):
-			updateConfiguration(ControlPREFIX,value)
+			updateConfiguration(ProgramPath,value)
 		elif option in ('-h'):
 			PrintUsage()
 		else:
