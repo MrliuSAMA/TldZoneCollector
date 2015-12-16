@@ -10,9 +10,7 @@ This tool used to get root zone information periodically from IANA
 1. **下载进程**的下载动作由Python内置的Schedule工具进行调度，不进行下载任务时，下载进程Sleep
 2. 下载完成后，**验证进程**对**下载进程**得到的数据进行真实性和完整性校验，校验工具采用开源的GunPG软件
 3. **验证进程**完成后，由**迁移进程**将通过校验的文件迁移至目标文件夹
-</br>
-</br>
-</br>
+
 ## 文件及目录列表
 -----
 ### 目录
@@ -34,9 +32,6 @@ This tool used to get root zone information periodically from IANA
 	校验数字签名时使用的公钥文件(文件来源自MIT公钥数据库)
 + /root.zone/root.zone.sig
 	测试数据文件和测试签名文件，正式版本会将上述测试文件一出
-   
-   
-   
    
 ## 使用方法
 ---
