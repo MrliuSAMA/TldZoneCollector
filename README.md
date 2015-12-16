@@ -1,5 +1,5 @@
 # RootZoneCollector/根区采集模块
------
+
 This tool used to get root zone information periodically from IANA
     
    
@@ -11,9 +11,11 @@ This tool used to get root zone information periodically from IANA
 2. 下载完成后，**验证进程**对**下载进程**得到的数据进行真实性和完整性校验，校验工具采用开源的GunPG软件
 3. **验证进程**完成后，由**迁移进程**将通过校验的文件迁移至目标文件夹
    
-   
-   
-   
+
+
+
+
+
 ## 文件及目录列表
 -----
 ### 目录
