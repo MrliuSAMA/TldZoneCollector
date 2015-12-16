@@ -12,6 +12,8 @@ This tool used to get root zone information periodically from IANA
 3. **验证进程**完成后，由**迁移进程**将通过校验的文件迁移至目标文件夹
    
    
+   
+   
 ## 文件及目录列表
 -----
 ### 目录
@@ -33,6 +35,8 @@ This tool used to get root zone information periodically from IANA
 	校验数字签名时使用的公钥文件(文件来源自MIT公钥数据库)
 + /root.zone/root.zone.sig
 	测试数据文件和测试签名文件，正式版本会将上述测试文件一出
+   
+   
    
    
 ## 使用方法
