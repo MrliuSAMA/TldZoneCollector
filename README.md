@@ -13,11 +13,10 @@ This tool used to get root zone information periodically from IANA
 ## 文件及目录列表
 -----
 ### 目录
-  
-  
-  
-  
-  
+   
+   
+   
+   
 + /Old_Code   
 	存储重要的历史版本代码片段
 + /script   
