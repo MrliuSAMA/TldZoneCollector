@@ -14,9 +14,6 @@ This tool used to get root zone information periodically from IANA
 -----
 ### 目录
    
-   
-   
-   
 + /Old_Code   
 	存储重要的历史版本代码片段
 + /script   
@@ -42,4 +39,3 @@ This tool used to get root zone information periodically from IANA
 	python ZoneCollect.py -b
 	
 	python ZoneCollect.py -p 3600
-
