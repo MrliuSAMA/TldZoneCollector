@@ -4,7 +4,7 @@ This tool used to get root zone information periodically from IANA
 
 ## 概述
 -----
-根区采集模块工具，用于采集IANA发布的根区数据，并对采集的数据采用PGP校验，本工具实现了以下功能:   
+根区采集工具，采集IANA发布的根区数据，并对采集的数据进行PGP校验，工具实现了以下功能:   
 
 1. **下载进程**的下载动作由Python内置的Schedule工具进行调度，不进行下载任务时，下载进程Sleep
 2. 下载完成后，**验证进程**对**下载进程*得到的数据进行真实性和完整性校验，校验工具采用开源的GunPG软件

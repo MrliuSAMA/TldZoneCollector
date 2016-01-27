@@ -1,11 +1,11 @@
 #output
-Prefix			=	/usr/local/RootZoneCollected
+Prefix			=	/opt/TLDCollect/TLDCollected
 BackupFilePath	=	Data/ZoneGetBak
 CurFilePath		=	Data/ZoneGet
 LogPath		=	Log
 
 #input
-KeyPath 		= 	/usr/local/RootZoneCollector/PGPVarifyPublicKey.pub
-Period			=	28800
-ZoneDir		=	www.internic.net/domain/root.zone
-SigDir			=	www.internic.net/domain/root.zone.sig
+KeyPath 		= 	/opt/TLDCollect/TLDCollector/key.pub
+Period			=	14400
+ZoneDir		=	tld-server/Public/tld.zone
+SigDir			=	tld-server/Public/tld.zone.sig

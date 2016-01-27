@@ -5,11 +5,13 @@ import re
 import getopt
 import subprocess
 import time
+import os
 
-#ControlPREFIX = "/usr/local/RootZoneCollector/"
+#ControlPREFIX = "/opt/TLDCollect/RootZoneCollector/"
 
 def startService(ControlPREFIX):
 	#start ZoneCollect.py process
+	#f = open("/tmp/loglog.txt","w")
 	cmd = 'ps -ef | grep ZoneCollect.py'
 	sub = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
 	sub.wait()
@@ -28,9 +30,19 @@ def startService(ControlPREFIX):
 	if judge_ifrun == 1:
 		return None
 	elif judge_ifrun == 0:
-		cmd_run = "python %s/ZoneCollect.py -c /usr/local/RootZoneCollector/Configuration.in &" % ControlPREFIX
-		print (cmd_run)
+		cmd_run = "python %s/ZoneCollect.py -c /opt/TLDCollect/TLDCollector/Configuration.in -p 0" % ControlPREFIX
+		#cmd_run = "python %s/ZoneCollect.py -c /opt/TLDCollect/TLDCollector/Configuration.in &" % ControlPREFIX
+		#f.write("1231231232\n")
+		#f.close()
+		#print ("123123123")
+		#cmd_run = "ls &"
+		#print (cmd_run)
+		#os.system(cmd_run)
 		sub_run = subprocess.Popen(cmd_run, shell=True)
+		sub_run.wait()
+		#f = open("/tmp/loglog.txt","a")
+		#f.write("456456456\n")
+		#f.close()
 #		time.sleep(2)
 
 		sub_check = subprocess.Popen('ps -ef | grep ZoneCollect.py', stdout=subprocess.PIPE, shell=True)
@@ -43,6 +55,7 @@ def startService(ControlPREFIX):
 				print ("pid=%s," % lines.split()[1], end="\n")
 				break
 
+		return None
 
 		
 def stopService(ControlPREFIX):
@@ -100,7 +113,7 @@ def runServiceOnce(ControlPREFIX):
 
 def main(argv):
 
-	ProgramPath = "/usr/local/RootZoneCollector"
+	ProgramPath = "/opt/TLDCollect/TLDCollector"
 
 	try:
 		opts,args = getopt.getopt(argv[1:], "h", ["stop","start","restart","runonce","update="])
@@ -127,4 +140,4 @@ def main(argv):
 			sys.exit()
 
 if __name__ == "__main__":
-	main(sys.argv)	
+	main(sys.argv)

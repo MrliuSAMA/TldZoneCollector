@@ -18,9 +18,9 @@ def ReturnInfo_parameter(ConfigureFile):
 
 	match = re.search(r"Period\s*=\s*[0-9]*", fileContent)
 	print ("period="+match.group(0).split()[-1]+',', end="\n")
-	match = re.search(r"ZoneDir\s*=\s*[a-zA-Z/\.:]*", fileContent)
+	match = re.search(r"ZoneDir\s*=\s*[a-zA-Z/\.:-]*", fileContent)
 	print ("ZoneDir="+"http://"+match.group(0).split()[-1]+',', end="\n")
-	match = re.search(r"SigDir\s*=\s*[a-zA-Z/\.:]*", fileContent)
+	match = re.search(r"SigDir\s*=\s*[a-zA-Z/\.:-]*", fileContent)
 	print ("SigDir="+"http://"+match.group(0).split()[-1]+',', end="\n")
 	match = re.search(r"Prefix\s*=\s*[a-zA-Z/\.]*", fileContent)
 	prefix = match.group(0).split()[-1]
@@ -29,7 +29,7 @@ def ReturnInfo_parameter(ConfigureFile):
 	print ("Logpath="+prefix+'/'+logpath+'/run.log'+',', end="\n")
 	match = re.search(r"BackupFilePath\s*=\s*[a-zA-Z/\.]*", fileContent)
 	datapath = match.group().split()[-1]
-	print ("DataPath="+prefix+'/'+datapath+',', end="\n")
+	print ("DataPath="+prefix+'/'+datapath+'/,', end="\n")
 
 	f.close()
 	DataPath = "%s/%s" % (prefix, datapath)
@@ -69,7 +69,7 @@ def ReturnInfo_pid():
 			continue
 		if lines.split()[7].startswith("python") or lines.split()[7].startswith("ZoneCollect"):
 			print ("pid=%s," % lines.split()[1], end="\n")
-			judgeifrun = 1
+			judge_ifrun = 1
 			break
 	if judge_ifrun == 0:
 		print ("pid=0,", end="\n")	
@@ -79,12 +79,12 @@ def ReturnInfo_pid():
 def ReturnInfo_key(ConfigureFile):
 	#get information of imported public key
 	key_dir = os.path.dirname(ConfigureFile)
-	f = open("%s/%s" %(key_dir, "PGPVarifyPublicKey.pub"))
+	f = open("%s/%s" %(key_dir, "key.pub"))
 	lines = f.readlines()
 	print ("PGPKEY="+lines[4]+',',end="\n")
 	f.close()
 
-	sub = subprocess.Popen("gpg --list-keys", stdout=subprocess.PIPE, shell=True)
+	sub = subprocess.Popen("sudo gpg --list-keys", stdout=subprocess.PIPE, shell=True)
 	sub.wait()
 	reslines = sub.stdout.readlines()	
 	print (reslines[2].split()[1].split('/')[-1]+',', end="\n")
@@ -121,6 +121,6 @@ def ReturnInfo(ConfigureFile):
 
 if __name__ == "__main__":
 	#enter point
-	ConfigureFile = "/usr/local/RootZoneCollector/Configuration.in"
+	ConfigureFile = "/opt/TLDCollect/TLDCollector/Configuration.in"
 
 	ReturnInfo(ConfigureFile)

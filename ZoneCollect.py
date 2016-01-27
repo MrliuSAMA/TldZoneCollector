@@ -16,12 +16,6 @@ import json
 
 
 
-def init_pgpkey(KeyPath):
-	logging.debug("enter function init_pgpkey()")
-	#init and promote pgp keys , to possess pub-key an ultimate
-	keyID = ImportKey(KeyPath)
-	PromoteTrustkey(keyID)
-	return None
 
 
 
@@ -54,14 +48,14 @@ def init_directory(Prefix, BackupFolder, FinalFolder, LogPath):
 		sub.wait()
 
 	#init tempfile directory
-	if os.path.exists("/tmp/root-zone-collector")==True:
-		cmdstring = "rm -f /tmp/root-zone-collector/*.*"
+	if os.path.exists("/tmp/tld-zone-collector")==True:
+		cmdstring = "rm -f /tmp/tld-zone-collector/*.*"
 		sub = subprocess.Popen(cmdstring, shell=True)
 		sub.wait()
 	else:
 		cmdstring = "sudo mkdir -p %s && sudo chown -R %s %s && sudo chgrp -R %s %s && chmod -R 775 %s" \
-			% ("/tmp/root-zone-collector", currentUser, "/tmp/root-zone-collector", \
-				currentUser,"/tmp/root-zone-collector", "/tmp/root-zone-collector")
+			% ("/tmp/tld-zone-collector", currentUser, "/tmp/tld-zone-collector", \
+				currentUser,"/tmp/tld-zone-collector", "/tmp/tld-zone-collector")
 		print cmdstring
 		sub = subprocess.Popen(cmdstring, shell=True)	
 		sub.wait()
@@ -82,6 +76,38 @@ def init_logging(LogPath):
 			filemode = 'a')
 	logging.info('#'*30 + "A New restart:")	
 
+	return None
+
+
+def init_environ():
+	
+	logging.info("init environ")
+
+	try:
+		lang_env = os.environ["LANG"]
+		if "zh_CN" in lang_env:
+			os.environ["LANG"] = "en_US.UTF-8"
+			logging.info("change environment variable LANG to en_US.UTF-8")
+		else:
+			pass
+	except:
+		pass
+
+	os.environ["HOME"] = "/home/nagios"
+	logging.info("change environment variable HOME to /home/nagios")
+
+	return None
+
+
+
+def init_pgpkey(KeyPath):
+	logging.debug("enter function init_pgpkey()")
+	#init and promote pgp keys , to possess pub-key an ultimate
+	keyID = ImportKey(KeyPath)
+	PromoteTrustkey(keyID)
+
+
+	return None
 
 
 
@@ -92,8 +118,9 @@ def init(Prefix, BackupFolder, FinalFolder, LogPath, KeyPath):
 
 	init_logging(LogPath)
 
-	init_pgpkey(KeyPath)
+	init_environ()
 
+	init_pgpkey(KeyPath)
 
 
 def pull(ZoneFileServerpath, SigFileServerpath):
@@ -102,15 +129,17 @@ def pull(ZoneFileServerpath, SigFileServerpath):
 	timeString = time.strftime("%F_%T_")
 
 	sigFile = timeString+SigFileServerpath.split('/')[-1]	
-	tempdir = "/tmp/root-zone-collector"
+	tempdir = "/tmp/tld-zone-collector"
 	cmdstring = "curl %s -s -o %s/%s --retry-delay 60 --retry 3" % (SigFileServerpath, tempdir, sigFile)
+	print SigFileServerpath,tempdir,sigFile
+	print cmdstring
 	sub = subprocess.Popen(cmdstring, shell=True)
 	sub.wait()
 	sigReturnCode = sub.returncode
 
 	zoneFile = timeString+ZoneFileServerpath.split('/')[-1]
-	tempdir = "/tmp/root-zone-collector"
-	cmdstring = "curl %s  -s -o %s/%s --retry-delay 60 --retry 3" % (ZoneFileServerpath, tempdir, zoneFile)
+	tempdir = "/tmp/tld-zone-collector"
+	cmdstring = "curl %s -s -o %s/%s --retry-delay 60 --retry 3" % (ZoneFileServerpath, tempdir, zoneFile)
 	sub = subprocess.Popen(cmdstring, shell=True)
 	sub.wait()
 	dataReturnCode = sub.returncode
@@ -122,7 +151,7 @@ def pull(ZoneFileServerpath, SigFileServerpath):
 	logFile = timeString+"root.zone.log"
 	fp= open("%s/%s" % (tempdir,logFile) ,"w")
 	json.dump(logDict, fp, indent=4, sort_keys=True)
-	fp.close() 
+	fp.close()
 
 
 
@@ -140,12 +169,13 @@ def pull(ZoneFileServerpath, SigFileServerpath):
 def check_move(SigFile, DataFile, LogFile, BackupFolder, FinalFolder):
 	logging.debug("enter function check_move()")
 	#use gpg varify downloaded file
-	tempdir = "/tmp/root-zone-collector"
-	cmd = "gpg --verify /tmp/root-zone-collector/%s /tmp/root-zone-collector/%s" % (SigFile,DataFile)
+	tempdir = "/tmp/tld-zone-collector"
+	cmd = "gpg --verify /tmp/tld-zone-collector/%s /tmp/tld-zone-collector/%s" % (SigFile,DataFile)
 	logging.info(cmd)
 	sub = subprocess.Popen(cmd, shell=True, stderr=subprocess.PIPE)
 	sub.wait()
 	linelist = sub.stderr.readlines()
+	#pprint.pprint(linelist)
 	res1 = re.search("Good signature",linelist[1])
 	res2 = re.search("完好的签名",linelist[1])
 	if res1 != None or res2 != None:
@@ -189,7 +219,7 @@ def check_move(SigFile, DataFile, LogFile, BackupFolder, FinalFolder):
 		#varify failed so clear tempfile folder 
 		runcmd = "rm -f %s/%s ; rm -f %s/%s" % (tempdir, SigFile, tempdir, DataFile)
 		logging.info(runcmd)
-		sub = subprocess.Popen(runcmd1,shell=True)
+		sub = subprocess.Popen(runcmd,shell=True)
 		sub.wait()
 		if sub.returncode != 0:
 			logging.warning("clear tempfile folder failed")
@@ -205,8 +235,8 @@ def proc(ZoneFileServerpath, SigFileServerpath, BackupFolder, FinalFolder):
 
 	elif code0 == 23 or code1 == 23:
 		logging.warning("write downloaded file failed")
-		logging.info("rm -f /tmp/root-zone-collector/*.*")
-		subprocess.Popen("rm -f /tmp/root-zone-collector/*.*", shell=True)
+		logging.info("rm -f /tmp/tld-zone-collector/*.*")
+		subprocess.Popen("rm -f /tmp/tld-zone-collector/*.*", shell=True)
 		sys.exit(1)
 	elif code0 ==6 or code1 == 6:
 		logging.warning("unable to resolve the host")
@@ -223,11 +253,17 @@ def ImportKey(Keypath):
 #	print Keypath
 	logging.debug("enter function ImportKey()")
 	#inport public-pgp-key from file to key-ring(in memory)
+	#print "******"
+	#print os.system("whoami")
+	#os.system("export HOME=/home/nagios")
+	#print os.system("env | grep HOME")
+	#print  "######"
+	#print os.system("env | grep ROOT")
 	cmd = "gpg --import %s" % Keypath
 	sub = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=True)
 	sub.wait()
 	res = sub.stderr.readlines() 
-#	pprint.pprint(res)
+	#pprint.pprint(res)
 	if "not changed" in res[0] or "未改变" in res[0]:
 		logging.info("key already exist[repeated import]")
 #		print "key already imported!"
@@ -283,8 +319,8 @@ def extractParameter(ConfigurationFile):
 	f.close()
 
 	period = re.search("Period\s*=\s*([0-9]*)", fileContent, re.M).group(1)
-	zonedir = re.search("ZoneDir\s*=\s*([a-zA-Z0-9\./]*)", fileContent, re.M).group(1)
-	sigdir = re.search("SigDir\s*=\s*([a-zA-Z0-9\./]*)", fileContent, re.M).group(1)
+	zonedir = re.search("ZoneDir\s*=\s*([a-zA-Z0-9\./-]*)", fileContent, re.M).group(1)
+	sigdir = re.search("SigDir\s*=\s*([a-zA-Z0-9\./-]*)", fileContent, re.M).group(1)
 	prefix = re.search("Prefix\s*=\s*([a-zA-Z0-9\./]*)", fileContent, re.M).group(1)
 	backupfilepath = re.search("BackupFilePath\s*=\s*([a-zA-Z0-9\./]*)", fileContent, re.M).group(1)
 	truefilepath = re.search("CurFilePath\s*=\s*([a-zA-Z0-9\./]*)", fileContent, re.M).group(1)
@@ -321,9 +357,36 @@ def usage():
 
 
 
-if __name__ == "__main__":
-	#deal with parameter 
+def createDaemon():	
+	try:
+		if os.fork() > 0: os._exit(0)
+	except OSError, error:
+		print 'fork #1 failed: %d (%s)' % (error.errno, error.strerror)
+		os._exit(1)
+	os.chdir('/')
+	os.setsid()
+	os.umask(0)
+	try:
+		pid = os.fork()
+		if pid > 0:
+			####:show the pid of daemon process
+			####print 'Daemon PID %d' % pid
+			os._exit(0)
+	except OSError, error:
+		print 'fork #2 failed: %d (%s)' % (error.errno, error.strerror)
+		os._exit(1)
+	sys.stdout.flush()
+	sys.stderr.flush()
+	si = file("/dev/null", 'r')
+	so = file("/dev/null", 'a+')
+	se = file("/dev/null", 'a+', 0)
+	os.dup2(si.fileno(), sys.stdin.fileno())
+	os.dup2(so.fileno(), sys.stdout.fileno())
+	os.dup2(se.fileno(), sys.stderr.fileno())
+	main() # function demo
 
+
+def main():
 	configurationFilePath = "dummy"
 	periodTime = "dummy"
 	ifOnce = "yes"
@@ -352,7 +415,7 @@ if __name__ == "__main__":
 			sys.exit()
 
 	res = extractParameter(configurationFilePath)
-
+	print res
 	period = res[0]
 	zoneFileDir = res[1]
 	sigFileDir = res[2]
@@ -367,9 +430,12 @@ if __name__ == "__main__":
 	if ifOnce == "yes":
 		proc(zoneFileDir, sigFileDir, backupFolder, finalFolder)
 	else:
-		if periodTime == "dummy":
+		if periodTime == "0":
 			periodTime = period
 		timing_exe(int(periodTime), zoneFileDir,sigFileDir,backupFolder, finalFolder )	
 
-
+if __name__ == "__main__":
+	#deal with parameter 
+	createDaemon()
+	#main()
 
